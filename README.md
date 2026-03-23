@@ -91,20 +91,29 @@ classDiagram
 
 ---
 
+My main goal was to build a system that manages different vehicle types across multiple floors, automatically handles slot upsizing, calculates precise billing, and allocates slots intelligently based on the entry gate. 
 
-**Introduction:**
-In my design for a Multilevel Parking System. The objective was to build a system that manages three types of vehicles—2-wheelers, cars, and buses—across multiple floors, handles automated upsize slot assignments if smaller slots are full, calculates billing correctly based on the final slot used, and allocates intelligently based on the gate the vehicle entered from."
+Here is the step-by-step breakdown of how I designed the system from the ground up:
 
-**Core Entities & Data Flow:**
-"At the center of my design is the `ParkingLot` class. It manages three main collections: a list of `ParkingSlot` objects, a map of `EntryGate` objects, and a map of active `ParkingTicket`s. When a `Vehicle` arrives at an `EntryGate`, the system captures its details and timestamp, and triggers the `park()` method."
+1. **Defining the Base Entities and Enums:**
+   - I started by defining the core properties using Enums. `VehicleType` defines the types of vehicles (Two-Wheeler, Car, Bus) and uniquely maps each to the `SlotType`s they are allowed to park in.
+   - `SlotType` (Small, Medium, Large) securely stores the hourly billing rate for that specific slot size.
 
-**The Allocation Strategy (The 'Brain' of the system):**
-"The most interesting part of the requirement is the allocation logic. It requires finding the smallest compatible slot nearest to the entry gate. 
-I approached this using an Enum-based compatibility matrix. The `VehicleType` enum defines exactly which `SlotType` it can fit into. This removes messy 'if-else' ladders from the core code.
-To find the 'nearest' slot relative to the gate, I assigned a `floor` property to both slots and gates. The system filters all free, compatible slots, and uses a custom sorting comparator to find the slot with the smallest distance to the entry gate floor, breaking ties by slot number."
+2. **Creating the Data Models:**
+   - Next, I created simple, state-holding objects. A `Vehicle` holds its license plate and type. A `ParkingSlot` knows its floor number, slot number, type, and whether it's currently occupied. An `EntryGate` also knows which floor it is on.
+   - For record-keeping, I created `ParkingTicket` (generated at entry) and `Bill` (generated at exit). 
 
-**Checkout and Billing:**
-"For checkout, the `exit()` method takes the original `ParkingTicket` and the exit timestamp. It frees up the `ParkingSlot` immediately. Then, a `Bill` object is generated. One trick here is the billing rule: a vehicle upgraded to a larger slot must pay the larger rate. To handle this cleanly, my design ties the hourly rate directly to the `SlotType` enum, not the vehicle. The `Bill` class rounds up the duration to the nearest whole hour and multiplies it by the allocated slot's rate."
+3. **Building the Core Orchestrator:**
+   - Instead of scattering logic, I encapsulated all operations inside a central `ParkingLot` class. This class acts as the system's brain and maintains the master lists of slots, entry gates, and active tickets.
+
+4. **Designing the Allocation Strategy:**
+   - The most complex requirement was finding the smallest compatible slot nearest to the entry gate. 
+   - When `park()` is called, the system grabs all free slots and filters them using the `VehicleType` compatibility matrix we defined earlier, ensuring the slot size is at least as large as what was requested (handling the upsizing rule).
+   - Then, it sorts the remaining slots by the absolute distance between the gate's floor and the slot's floor, breaking ties by slot number. This dynamically finds the perfect, closest slot.
+
+5. **Handling Checkout and Billing:**
+   - For checkout, the `exit()` method takes the original `ParkingTicket` and immediately frees up the slot.
+   - It generates a `Bill` by calculating the parking duration, rounding up to the nearest hour. Crucially, the system charges based on the allocated `SlotType` rate—which is pulled directly from the Enum—completely satisfying the rule that an upsized vehicle pays the upsized rate automatically.
 
 **Conclusion:**
-"This object-oriented structure ensures the code is highly cohesive and loosely coupled. If tomorrow we wanted to add a floor or introduce 'Electric Vehicle' slots, we would just add a configuration to the initialization or the enums, without touching the core assignment logic.
+By separating data models from core operations and leveraging enums for business rules, the architecture remains highly cohesive and loosely coupled. Adding a new floor or a new vehicle type would only require a simple configuration update without breaking the core logic. Thank you, I can take any questions now."
