@@ -5,14 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Demo driver that exercises all parking lot features.
- *
- * Build & run:
- *   cd Multilevel-Parking-System/src
- *   javac com/example/parking/*.java
- *   java com.example.parking.Main
- */
 public class Main {
 
     public static void main(String[] args) {
